@@ -7,43 +7,41 @@
 # based on Optima 270, although I'll be curious whether temperature sensor
 # values will be calculated correctly.
 #
-# To use this file, include it via the `packages` mechanism and set the
-# following `vars`:
-# * `uart_id`. Mandatory. Set this to the `id` of a `uart` section that contains
-#   the hardware-specific configuration for the UART on your board that's
-#   connected to the Genvex's CTS pins.
-# * `modbus_baud_rate`. Optional. If your Genvex system is not set to the
+# To use this file, include it via the Remote Packages mechanism and set the
+# following `substitutions` if needed:
+# * `genvex_uart_id`. Mandatory. Set this to the `id` of a `uart` section that
+#   contains the hardware-specific configuration for the UART on your board
+#   that's connected to the Genvex's CTS pins.
+# * `genvex_baud_rate`. Optional. If your Genvex system is not set to the
 #   default of 19200 (in the EL settings group), override this. If you have
 #   unreliable RS-485 communication, you could try 9600, but your Genvex system
 #   has to be configured to the same value.
-# * `modbus_address`. Optional. Set this to the address of the Modbus server you
+# * `genvex_address`. Optional. Set this to the address of the Modbus server you
 #   are targeting. The server address can be changed in the Genvex system
 #   settings.
-# * `modbus_parity`. Optional. Like the settings above, set this to match your
+# * `genvex_parity`. Optional. Like the settings above, set this to match your
 #   Genvex system settings.
 
 substitutions:
-  modbus_ctrl_id: genvex_optima_270_modbus_ctrl
-
-defaults:
-  # Override these with `vars` as necessary to match the "EL" settings on your
-  # Genvex unit
-  modbus_baud_rate: "19200"
-  modbus_address: "20"
-  modbus_parity: EVEN
+  genvex_ctrl_id: genvex_optima_270_modbus_ctrl
+  # Override these with `substitutions` in the caller as necessary to match the
+  # "EL" settings on your Genvex unit
+  genvex_baud_rate: "19200"
+  genvex_address: "20"
+  genvex_parity: EVEN
 
 uart:
-  id: ${uart_id}
-  baud_rate: ${modbus_baud_rate}
-  parity: ${modbus_parity}
+  id: ${genvex_uart_id}
+  baud_rate: ${genvex_baud_rate}
+  parity: ${genvex_parity}
 
 modbus:
   id: genvex_optima_270_modbus
-  uart_id: ${uart_id}
+  uart_id: ${genvex_uart_id}
 
 modbus_controller:
-- id: ${modbus_ctrl_id}
-  address: ${modbus_address}
+- id: ${genvex_ctrl_id}
+  address: ${genvex_address}
   modbus_id: genvex_optima_270_modbus
   setup_priority: -10
   command_throttle: 20ms
@@ -59,7 +57,7 @@ sensor:
 # for my ECO 400 XL unit. What's the right way to find these numbers? Are they
 # stored in a register somewhere?
 - platform: modbus_controller
-  modbus_controller_id: ${modbus_ctrl_id}
+  modbus_controller_id: ${genvex_ctrl_id}
   name: T1 air inject
   icon: mdi:thermometer-plus
   register_type: read
@@ -73,7 +71,7 @@ sensor:
     - offset: 105.61
 
 - platform: modbus_controller
-  modbus_controller_id: ${modbus_ctrl_id}
+  modbus_controller_id: ${genvex_ctrl_id}
   name: T3 air intake
   icon: mdi:thermometer-chevron-down
   register_type: read
@@ -85,7 +83,7 @@ sensor:
   filters: *register_to_celcius
 
 - platform: modbus_controller
-  modbus_controller_id: ${modbus_ctrl_id}
+  modbus_controller_id: ${genvex_ctrl_id}
   name: T4 air exhaust
   icon: mdi:thermometer-chevron-up
   register_type: read
@@ -97,7 +95,7 @@ sensor:
   filters: *register_to_celcius
 
 - platform: modbus_controller
-  modbus_controller_id: ${modbus_ctrl_id}
+  modbus_controller_id: ${genvex_ctrl_id}
   name: T7 air extract
   icon: mdi:thermometer-minus
   register_type: read
@@ -112,7 +110,7 @@ sensor:
 # value of the air intake temperature is also presented. This should help with
 # tuning them better and with understanding how device-specific they are.
 - platform: modbus_controller
-  modbus_controller_id: ${modbus_ctrl_id}
+  modbus_controller_id: ${genvex_ctrl_id}
   name: Raw T3 air intake
   icon: mdi:thermometer-probe
   register_type: read
@@ -124,7 +122,7 @@ sensor:
 # R5 = 1023
 
 - platform: modbus_controller
-  modbus_controller_id: ${modbus_ctrl_id}
+  modbus_controller_id: ${genvex_ctrl_id}
   name: Humidity raw
   icon: mdi:water-opacity
   register_type: read
@@ -173,7 +171,7 @@ sensor:
 
 # H100: Appears to be the number of days since last filter reset.
 - platform: modbus_controller
-  modbus_controller_id: ${modbus_ctrl_id}
+  modbus_controller_id: ${genvex_ctrl_id}
   name: Days since filter reset
   icon: mdi:filter-check
   register_type: holding
@@ -188,7 +186,7 @@ sensor:
 
 number:
 - platform: modbus_controller
-  modbus_controller_id: ${modbus_ctrl_id}
+  modbus_controller_id: ${genvex_ctrl_id}
   name: Temperature target
   unit_of_measurement: "°C"
   icon: "mdi:home-thermometer"
@@ -203,7 +201,7 @@ number:
   mode: box
 
 - platform: modbus_controller
-  modbus_controller_id: ${modbus_ctrl_id}
+  modbus_controller_id: ${genvex_ctrl_id}
   name: Fan speed level
   icon: "mdi:fan"
   address: 7
