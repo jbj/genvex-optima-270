@@ -1,0 +1,213 @@
+# Genvex Optima 270 for ESPHome
+# =============================
+#
+# This ESPHome configuration file contains the Modbus configuration for
+# controlling a Genvex central ventilation unit in Home Assistant via ESPHome.
+# It works for my ECO 400 XL unit, and I speculate that it works for all units
+# based on Optima 270, although I'll be curious whether temperature sensor
+# values will be calculated correctly.
+#
+# To use this file, include it via the `packages` mechanism and set the
+# following `vars`:
+# * `uart_id`. Mandatory. Set this to the `id` of a `uart` section that contains
+#   the hardware-specific configuration for the UART on your board that's
+#   connected to the Genvex's CTS pins.
+# * `modbus_baud_rate`. Optional. If your Genvex system is not set to the
+#   default of 19200 (in the EL settings group), override this. If you have
+#   unreliable RS-485 communication, you could try 9600, but your Genvex system
+#   has to be configured to the same value.
+# * `modbus_address`. Optional. Set this to the address of the Modbus server you
+#   are targeting. The server address can be changed in the Genvex system
+#   settings.
+# * `modbus_parity`. Optional. Like the settings above, set this to match your
+#   Genvex system settings.
+
+substitutions:
+  modbus_ctrl_id: genvex_optima_270_modbus_ctrl
+
+defaults:
+  # Override these with `vars` as necessary to match the "EL" settings on your
+  # Genvex unit
+  modbus_baud_rate: "19200"
+  modbus_address: "20"
+  modbus_parity: EVEN
+
+uart:
+  id: ${uart_id}
+  baud_rate: ${modbus_baud_rate}
+  parity: ${modbus_parity}
+
+modbus:
+  id: genvex_optima_270_modbus
+  uart_id: ${uart_id}
+
+modbus_controller:
+- id: ${modbus_ctrl_id}
+  address: ${modbus_address}
+  modbus_id: genvex_optima_270_modbus
+  setup_priority: -10
+  command_throttle: 20ms
+  update_interval: 10s
+
+sensor:
+# Read registers
+# ==============
+
+# The first four registers are for measured temperatures. They are not
+# straightforward to translate to degrees Celcius, seemingly requiring a
+# (negative) scaling and an offset. The numbers below are empirically determined
+# for my ECO 400 XL unit. What's the right way to find these numbers? Are they
+# stored in a register somewhere?
+- platform: modbus_controller
+  modbus_controller_id: ${modbus_ctrl_id}
+  name: T1 air inject
+  icon: mdi:thermometer-plus
+  register_type: read
+  address: 0
+  value_type: S_WORD
+  device_class: temperature
+  unit_of_measurement: "°C"
+  accuracy_decimals: 1
+  filters: &register_to_celcius
+    - multiply: -0.1145763169
+    - offset: 105.61
+
+- platform: modbus_controller
+  modbus_controller_id: ${modbus_ctrl_id}
+  name: T3 air intake
+  icon: mdi:thermometer-chevron-down
+  register_type: read
+  address: 1
+  value_type: S_WORD
+  device_class: temperature
+  unit_of_measurement: "°C"
+  accuracy_decimals: 1
+  filters: *register_to_celcius
+
+- platform: modbus_controller
+  modbus_controller_id: ${modbus_ctrl_id}
+  name: T4 air exhaust
+  icon: mdi:thermometer-chevron-up
+  register_type: read
+  address: 2
+  value_type: S_WORD
+  device_class: temperature
+  unit_of_measurement: "°C"
+  accuracy_decimals: 1
+  filters: *register_to_celcius
+
+- platform: modbus_controller
+  modbus_controller_id: ${modbus_ctrl_id}
+  name: T7 air extract
+  icon: mdi:thermometer-minus
+  register_type: read
+  address: 3
+  value_type: S_WORD
+  device_class: temperature
+  unit_of_measurement: "°C"
+  accuracy_decimals: 1
+  filters: *register_to_celcius
+
+# Just because the offset/multiply numbers above are slightly wrong, the raw
+# value of the air intake temperature is also presented. This should help with
+# tuning them better and with understanding how device-specific they are.
+- platform: modbus_controller
+  modbus_controller_id: ${modbus_ctrl_id}
+  name: Raw T3 air intake
+  icon: mdi:thermometer-probe
+  register_type: read
+  address: 1
+  value_type: S_WORD
+  state_class: measurement
+
+# R4 = 1023
+# R5 = 1023
+
+- platform: modbus_controller
+  modbus_controller_id: ${modbus_ctrl_id}
+  name: Humidity raw
+  icon: mdi:water-opacity
+  register_type: read
+  address: 6
+  value_type: S_WORD
+  state_class: measurement
+
+# R7 = 0
+# R8 = 0
+# R9 = 0
+# R100 = 0
+# R101 = 0
+
+# Holding registers
+# -----------------
+#
+# Most of these registers are not presented but just mentioned in comments.
+# That's to avoid them being changed by accident and to avoid spending time
+# reading them.
+
+# H0 = 1 (not mentioned in documentation)
+# H1: target temperature (Celcius) * 10 - 100. Range: 0-200.
+# H2 = 0 (not mentioned in documentation)
+
+# H3: A1 - reheating. Range: 0-1
+# H4: A4 - timer levels 3 and 4 - on/off. Range: 0-1
+# H5: EF2 - filter timer. Range: 0-12
+# H6: A2 - humidity control. Range: 0-1
+# H7: Fan speed level. Range: 0-4
+
+# The following block all have range 0-100, denoting percent of max fan speed.
+# H08: EB4 - Level 4 Supply air
+# H09: EB8 - Level 4 Extract air
+# H10: EB1 - Level 1 Supply air
+# H11: EB2 - Level 2 Supply air
+# H12: EB3 - Level 3 Supply air
+# H13: EB5 - Level 1 Extract air
+# H14: EB6 - Level 2 Extract air
+# H15: EB7 - Level 3 Extract air
+
+# H16: EC1 - Frost protection (0 = OFF, 1 = electric fresh, 2 = electric exhaust, 3 = vent red, 4 = vent red, 5 = 3 + 4)
+# H17: A5 - Timer levels 3 and 4 - hours. Range: 1-9
+# H18: EF3 - Filter/stop. Range: 0-1
+# H19: EC3 - Regulation method. Range: 1-2
+# H20: ED2 - Preheating temperature (Celcius) * 10 + 150. Range: 0-250
+
+# H100: Appears to be the number of days since last filter reset.
+- platform: modbus_controller
+  modbus_controller_id: ${modbus_ctrl_id}
+  name: Days since filter reset
+  icon: mdi:filter-check
+  register_type: holding
+  address: 100
+  value_type: U_WORD
+# H101 = 0
+# H102 = 0
+# H103 = 0
+
+# H200: local time minute
+# H201: local time hour
+
+number:
+- platform: modbus_controller
+  modbus_controller_id: ${modbus_ctrl_id}
+  name: Temperature target
+  unit_of_measurement: "°C"
+  icon: "mdi:home-thermometer"
+  address: 1
+  lambda: "return (x + 100) / 10;"
+  write_lambda: "return x * 10 - 100;"
+  value_type: U_WORD
+  entity_category: config
+  min_value: 10
+  max_value: 30
+  step: 0.1
+  mode: box
+
+- platform: modbus_controller
+  modbus_controller_id: ${modbus_ctrl_id}
+  name: Fan speed level
+  icon: "mdi:fan"
+  address: 7
+  value_type: U_WORD
+  entity_category: config
+  min_value: 0
+  max_value: 4
