@@ -38,18 +38,43 @@ ESPHome](https://next.esphome.io/guides/configuration-types.html#remote-git-pack
 like so:
 
 ```yaml
-substitutions:
-  genvex_uart_id: my_uart_id
-  # override other variables if needed:
-  # genvex_baud_rate, genvex_address, genvex_parity
-
 packages:
   optima270:
     url: https://github.com/jbj/genvex-optima-270
     file: genvex-optima-270.yaml
     refresh: 0d # Always use the latest version
 
+substitutions:
+  genvex_uart_id: my_uart_id
+  # override other variables if needed:
+  # genvex_baud_rate, genvex_address, genvex_parity
+
 uart:
   id: my_uart_id
   # configure pins and other UART settings for your board
 ```
+
+If you use the LILYGO T-CAN485 as described above, you can use [the ESPHome
+package I wrote for it](https://github.com/jbj/t-can485-esphome), linking the
+two packages together by choosing the same UART id:
+
+```yaml
+packages:
+  lilygo:
+    url: https://github.com/jbj/t-can485-esphome
+    file: rs485.yaml
+    refresh: 0d
+  optima270:
+    url: https://github.com/jbj/genvex-optima-270
+    file: genvex-optima-270.yaml
+    refresh: 0d # Always use the latest version
+
+substitutions:
+  # For the `optima270` package
+  genvex_uart_id: modbus_uart
+  # For the `lilygo` package
+  rs485_uart_id: modbus_uart
+```
+
+That should be all the configuration you need, plus the parts that Home
+Assistant generates for you when you create a new device.
