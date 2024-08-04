@@ -14,8 +14,9 @@ Hardware
 --------
 
 Use a board that's compatible with ESPHome and has an RS-485 driver with
-connections for A, B and GND. I haven't tried omitting GND. I also don't know
-whether the connections are galvanically isolated on the Genvex side.
+connections for A, B and GND. I think the proper cabling is to connect A and B
+via a twisted pair and to connect GND via either another pair and/or or the
+cable shielding.
 
 Connect to the CTS pins on the Genvex unit according to the circuit diagrams in
 its installation manual. The pins may be hidden under a sticker that you can
