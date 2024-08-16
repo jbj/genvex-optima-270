@@ -106,6 +106,21 @@ sensor:
   accuracy_decimals: 1
   filters: *register_to_celcius
 
+- platform: modbus_controller
+  modbus_controller_id: ${genvex_ctrl_id}
+  name: Relative humidity
+  icon: mdi:cloud-percent
+  register_type: read
+  address: 6
+  value_type: S_WORD
+  device_class: humidity
+  unit_of_measurement: "%"
+  accuracy_decimals: 1
+  filters:
+    - multiply: 0.4830157415
+    - offset: -24.24225352
+
+
 # Just because the offset/multiply numbers above are slightly wrong, the raw
 # value of the air intake temperature is also presented. This should help with
 # tuning them better and with understanding how device-specific they are.
@@ -121,6 +136,9 @@ sensor:
 # R4 = 1023
 # R5 = 1023
 
+# Just because the offset/multiply numbers above are slightly wrong, the raw
+# value of humidity is also presented. This should help with
+# tuning them better and with understanding how device-specific they are.
 - platform: modbus_controller
   modbus_controller_id: ${genvex_ctrl_id}
   name: Humidity raw
