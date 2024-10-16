@@ -64,6 +64,7 @@ sensor:
   address: 0
   value_type: S_WORD
   device_class: temperature
+  state_class: measurement
   unit_of_measurement: "°C"
   accuracy_decimals: 1
   filters: &register_to_celcius
@@ -78,6 +79,7 @@ sensor:
   address: 1
   value_type: S_WORD
   device_class: temperature
+  state_class: measurement
   unit_of_measurement: "°C"
   accuracy_decimals: 1
   filters: *register_to_celcius
@@ -90,6 +92,7 @@ sensor:
   address: 2
   value_type: S_WORD
   device_class: temperature
+  state_class: measurement
   unit_of_measurement: "°C"
   accuracy_decimals: 1
   filters: *register_to_celcius
@@ -102,6 +105,7 @@ sensor:
   address: 3
   value_type: S_WORD
   device_class: temperature
+  state_class: measurement
   unit_of_measurement: "°C"
   accuracy_decimals: 1
   filters: *register_to_celcius
