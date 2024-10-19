@@ -8,8 +8,6 @@ I speculate that it works for all units based on Optima 270, although I'll be
 curious whether temperature sensor values will be calculated correctly. Open an
 issue so we can figure it out together.
 
-The project is in an early stage, and contributes are welcome.
-
 Hardware
 --------
 
